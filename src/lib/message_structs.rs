@@ -1,4 +1,28 @@
 use serde::{Serialize, Deserialize};
+use std::collections::HashMap;
+
+pub struct MessageCounts {
+    pub normal_count: HashMap<String, i32>,
+    pub sticker_count: HashMap<String, i32>
+}
+impl MessageCounts {
+    pub fn new() -> MessageCounts {
+        MessageCounts {
+            normal_count: HashMap::new(),
+            sticker_count: HashMap::new()
+        }
+    }
+}
+
+pub trait HashMapExtend {
+    fn increment_map_count(&mut self, word: &str);
+}
+impl HashMapExtend for HashMap<String, i32> {
+    fn increment_map_count(&mut self, word: &str) {
+        let count = self.entry(word.to_string()).or_insert(0);
+        *count += 1;
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct Participant {
