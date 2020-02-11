@@ -1,39 +1,44 @@
-use std::fs;
 use std::error::Error;
 use serde_json;
 mod message_structs;
-use self::message_structs::HashMapExtend;
-
-pub fn open_file(args: Vec<String>) -> Result<String, &'static str> {
-    if args.len() < 2 {
-        return Err("Need the name of the file to parse");
-    }
-    //let filename = args[1].clone();
-    let filename = "message_2.json";
-    fs::read_to_string(filename).map_err(|_err| {"Could not read file"})
-}
+use message_structs::HashMapExtend;
+use message_structs::MessageThread;
+use message_structs::Participant;
 
 pub fn run(file_contents: String) -> Result<(), Box<dyn Error>> {
-    let message_thread: message_structs::MessageThread = serde_json::from_str(&file_contents).unwrap();
+    let message_thread: MessageThread = serde_json::from_str(&file_contents).unwrap();
     parse_message(message_thread);
     Ok(())
 }
 
-pub fn parse_message(message_thread: message_structs::MessageThread) {
-    let mut counts: message_structs::MessageCounts = message_structs::MessageCounts::new();
+pub fn parse_message(message_thread: MessageThread) {
+    let mut participants = Participant::new_as_vector(&message_thread.participants);
+
     for msg in &message_thread.messages {
-        if msg.content != "" {
-            for word in msg.content.split_whitespace() {
-                let word = word.to_lowercase();
-                counts.normal_count.increment_map_count(&word);
+        for participant in &mut participants {
+            if msg.sender_name != participant.name {
+                continue;
+            }
+            if msg.content != "" {
+                participant.message_count += 1;
+                for word in msg.content.split_whitespace() {
+                    let word = word.to_lowercase();
+                    participant.words_used.increment_map_count(&word);
+                }
+            }
+            if msg.sticker.uri != "Missing uri" {
+                participant.sticker_count += 1;
+                participant.stickers_used.increment_map_count(&msg.sticker.uri);
             }
         }
-        if msg.sticker.uri != "Missing uri" {
-            counts.sticker_count.increment_map_count(&msg.sticker.uri);
-        }
     }
-    for (key, val) in counts.normal_count.iter() {
-        println!("Word: \"{0}\" - Count {1}", key, val)
+
+    // for (key, val) in counts.word_count.iter() {
+    //     println!("Word: \"{0}\" - Count {1}", key, val)
+    // }
+
+    println!("Total Messages: {}", message_thread.messages.len());
+    for participant in participants {
+        participant.print_information();
     }
-    println!("Total messages: {}", message_thread.messages.len());
 }

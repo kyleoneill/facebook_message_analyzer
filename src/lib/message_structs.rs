@@ -1,16 +1,34 @@
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 
-pub struct MessageCounts {
-    pub normal_count: HashMap<String, i32>,
-    pub sticker_count: HashMap<String, i32>
+pub struct Participant {
+    pub name: String,
+    pub message_count: i32,
+    pub sticker_count: i32,
+    pub words_used: HashMap<String, i32>,
+    pub stickers_used: HashMap<String, i32>
 }
-impl MessageCounts {
-    pub fn new() -> MessageCounts {
-        MessageCounts {
-            normal_count: HashMap::new(),
-            sticker_count: HashMap::new()
+impl Participant {
+    pub fn new(name: String) -> Participant {
+        Participant {
+            name: name,
+            message_count: 0,
+            sticker_count: 0,
+            words_used: HashMap::new(),
+            stickers_used: HashMap::new()
         }
+    }
+    pub fn new_as_vector(input: &Vec<MessageParticipant>) -> Vec<Participant> {
+        let mut participants = Vec::new();
+        for person in input {
+            let new_participant = Participant::new(person.name.clone());
+            participants.push(new_participant);
+        }
+        participants
+    }
+    pub fn print_information(&self) {
+        println!("Messages from {0}: {1}", self.name, self.message_count);
+        println!("Stickers from {0}: {1}", self.name, self.sticker_count);
     }
 }
 
@@ -25,7 +43,7 @@ impl HashMapExtend for HashMap<String, i32> {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Participant {
+pub struct MessageParticipant {
     pub name: String
 }
 
@@ -80,7 +98,7 @@ pub struct Message {
 
 #[derive(Serialize, Deserialize)]
 pub struct MessageThread {
-    pub participants: Vec<Participant>,
+    pub participants: Vec<MessageParticipant>,
     pub messages: Vec<Message>,
     pub title: String,
     pub is_still_participant: bool,
